@@ -419,7 +419,7 @@ impl Game {
         let player = self.turn % self.players.len();
 
         println!(
-            "Turn {}: Player {} drew an {} with a value of {}.",
+            "Turn {}: Player {} drew a {} with a value of {}.",
             self.turn,
             player,
             card.nomenclature(),
