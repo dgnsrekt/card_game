@@ -91,8 +91,10 @@ mod cards {
         }
     }
 
-    /// Static helpers for easy and cheap iteration to create a deck of cards.
+    /// Static helper for easy and cheap iteration over suits.
     static SUITS: [Suit; 4] = [Suit::Spades, Suit::Diamonds, Suit::Hearts, Suit::Clubs];
+
+    /// Static helper for easy and cheap iteration over ranks.
     static RANKS: [Rank; 13] = [
         Rank::Two,
         Rank::Three,
