@@ -230,7 +230,7 @@ mod cards {
 /// This module provides functions for creating displayable cards.
 ///
 /// Example:
-/// ```
+/// ```text
 /// *---------* *---------* *---------*
 /// | K       | | 4       | | 8       |
 /// |         | |         | |         |
