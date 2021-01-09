@@ -92,6 +92,7 @@ fn main() {
     loop {
         game.deal_cards();
         let winning_card = game.find_high_card();
+        let sleep_time = time::Duration::from_secs(2);
 
         display_hand(&game.cards, true);
         println!("Pick a card any card.");
@@ -119,7 +120,6 @@ fn main() {
 
         println!("Lets see the results.");
 
-        let sleep_time = time::Duration::from_secs(2);
         thread::sleep(sleep_time);
 
         game.cards[choice].toggle();
@@ -137,5 +137,7 @@ fn main() {
 
         game.inc_gamesplayed();
         println!("{}\n\n", game);
+
+        thread::sleep(sleep_time);
     }
 }
