@@ -5,6 +5,9 @@ use rand::thread_rng;
 
 mod cards;
 
+use cards::card_printer::display_hand;
+use cards::{Card, DeckBuilder};
+
 struct Player {
     hand: Vec<Card>,
 }
@@ -31,9 +34,6 @@ impl Default for Player {
         Player { hand: Vec::new() }
     }
 }
-
-use cards::card_printer::display_hand;
-use cards::{Card, DeckBuilder};
 
 /// GameBuilder struct representing game options.
 struct GameBuilder {
@@ -131,18 +131,21 @@ impl Game {
 
         self.turn += 1;
     }
+
+    fn start(&mut self) {
+        self.shuffle_deck();
+
+        while !self.is_over() {
+            self.advance();
+        }
+
+        self.show_winner();
+
+        self.show_results();
+    }
 }
 
 fn main() {
     let mut game: Game = GameBuilder::new().max_players(3).spawn();
-
-    game.shuffle_deck();
-
-    while !game.is_over() {
-        game.advance();
-    }
-
-    game.show_winner();
-
-    game.show_results();
+    game.start();
 }
