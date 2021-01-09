@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 //! Super Card Game
 
 use rand::seq::SliceRandom;
@@ -78,7 +80,7 @@ impl Game {
 }
 
 use std::fmt::{self, Display, Formatter};
-use std::io::{self, Read};
+use std::io::{self};
 
 impl Display for Game {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
@@ -103,9 +105,7 @@ fn main() {
         match io::stdin().read_line(&mut input) {
             Ok(_) => {
                 if let Ok(i) = input.trim().parse::<usize>() {
-                    if i < 0 {
-                        choice = 0;
-                    } else if i > game.cards.len() - 1 {
+                    if i > game.cards.len() - 1 {
                         choice = game.cards.len() - 1;
                     } else {
                         choice = i;

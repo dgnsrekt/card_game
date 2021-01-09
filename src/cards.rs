@@ -339,7 +339,7 @@ pub mod card_printer {
     }
 
     fn print_index(hand: &Vec<Card>) {
-        for (idx, card) in hand.iter().enumerate() {
+        for (idx, _) in hand.iter().enumerate() {
             print!("     {}     ", idx);
             print!(" ")
         }
