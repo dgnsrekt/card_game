@@ -1,3 +1,4 @@
+use ansi_term::Colour;
 /// This module provides abstractions and methods for building and interacting with a Standard 52-card deck.
 use std::fmt::{self, Display, Formatter};
 
@@ -14,10 +15,10 @@ pub enum Suit {
 impl Display for Suit {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
         let s = match self {
-            Suit::Spades => "♠",
-            Suit::Diamonds => "♦",
-            Suit::Hearts => "♥",
-            Suit::Clubs => "♣",
+            Suit::Spades => Colour::White.paint("♠"),
+            Suit::Diamonds => Colour::Red.paint("♦"),
+            Suit::Hearts => Colour::Red.paint("♥"),
+            Suit::Clubs => Colour::White.paint("♣"),
         };
         write!(formatter, "{}", s)
     }
@@ -104,18 +105,38 @@ static RANKS: [Rank; 13] = [
     Rank::Ace,
 ];
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum CardState {
+    Visible,
+    Hidden,
+}
+
 /// Represets a single card with a suit and rank.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Card {
     pub suit: Suit,
     pub rank: Rank,
+    pub state: CardState,
+}
+
+impl Card {
+    pub fn toggle(&mut self) {
+        match self.state {
+            CardState::Visible => self.state = CardState::Hidden,
+            CardState::Hidden => self.state = CardState::Visible,
+        }
+    }
 }
 
 impl Card {
     /// Construct a new card struct
     ///
     pub fn new(suit: Suit, rank: Rank) -> Card {
-        Card { suit, rank }
+        Card {
+            suit,
+            rank,
+            state: CardState::Hidden,
+        }
     }
 
     /// Displays card nomenclature
@@ -233,66 +254,109 @@ mod tests {
 /// ```
 ///
 pub mod card_printer {
-    use super::{Card, Rank};
+    use super::{Card, CardState, Rank};
 
-    fn print_end(size: usize) {
-        for _ in 0..size {
+    fn print_end(hand: &Vec<Card>) {
+        for _ in 0..hand.len() {
             print!("*---------*");
             print!(" ")
         }
         println!();
     }
 
-    fn print_empty_section(size: usize) {
-        for _ in 0..size {
-            print!("|         |");
-            print!(" ")
-        }
-        println!();
-    }
-
-    fn print_left_rank(deck: &Vec<Card>) {
-        for card in deck {
-            if let Rank::Ten = card.rank {
-                print!("| {}      |", card.rank);
-            } else {
-                print!("| {}       |", card.rank);
+    fn print_empty_section(hand: &Vec<Card>) {
+        for card in hand {
+            match card.state {
+                CardState::Hidden => {
+                    print!("|#########|");
+                    print!(" ")
+                }
+                CardState::Visible => {
+                    print!("|         |");
+                    print!(" ")
+                }
             }
-            print!(" ")
         }
         println!();
     }
 
-    fn print_right_rank(deck: &Vec<Card>) {
-        for card in deck {
-            if let Rank::Ten = card.rank {
-                print!("|      {} |", card.rank);
-            } else {
-                print!("|       {} |", card.rank);
+    fn print_left_rank(hand: &Vec<Card>) {
+        for card in hand {
+            match card.state {
+                CardState::Hidden => {
+                    print!("|#########|");
+                    print!(" ")
+                }
+
+                CardState::Visible => {
+                    if let Rank::Ten = card.rank {
+                        print!("| {}      |", card.rank);
+                    } else {
+                        print!("| {}       |", card.rank);
+                    }
+                    print!(" ")
+                }
             }
+        }
+        println!();
+    }
+
+    fn print_right_rank(hand: &Vec<Card>) {
+        for card in hand {
+            match card.state {
+                CardState::Hidden => {
+                    print!("|#########|");
+                    print!(" ")
+                }
+                CardState::Visible => {
+                    if let Rank::Ten = card.rank {
+                        print!("|      {} |", card.rank);
+                    } else {
+                        print!("|       {} |", card.rank);
+                    }
+                    print!(" ")
+                }
+            }
+        }
+        println!();
+    }
+
+    fn print_suit(hand: &Vec<Card>) {
+        for card in hand {
+            match card.state {
+                CardState::Hidden => {
+                    print!("|#########|");
+                    print!(" ")
+                }
+
+                CardState::Visible => {
+                    print!("|    {}    |", card.suit);
+                    print!(" ")
+                }
+            }
+        }
+        println!();
+    }
+
+    fn print_index(hand: &Vec<Card>) {
+        for (idx, card) in hand.iter().enumerate() {
+            print!("     {}     ", idx);
             print!(" ")
         }
         println!();
     }
 
-    fn print_suit(deck: &Vec<Card>) {
-        for card in deck {
-            print!("|    {}    |", card.suit);
-            print!(" ")
+    pub fn display_hand(hand: &Vec<Card>, show_index: bool) {
+        print_end(&hand);
+        print_left_rank(&hand);
+        print_empty_section(&hand);
+        print_suit(&hand);
+        print_empty_section(&hand);
+        print_right_rank(&hand);
+        print_end(&hand);
+
+        if show_index {
+            print_index(&hand);
         }
-        println!();
-    }
-
-    pub fn display_hand(deck: &Vec<Card>, name: &str) {
-        println!("{: >width$}'s Hand", name, width = (deck.len() * 12) / 2); // todo: move
-        let width = deck.len();
-
-        print_end(width);
-        print_left_rank(&deck);
-        print_empty_section(width);
-        print_suit(&deck);
-        print_empty_section(width);
-        print_right_rank(&deck);
-        print_end(width);
     }
 }

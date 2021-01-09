@@ -2,57 +2,31 @@
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use std::{thread, time};
 
 mod cards;
 
 use cards::card_printer::display_hand;
 use cards::{Card, DeckBuilder};
 
-struct Player {
-    hand: Vec<Card>,
-}
-
-impl Player {
-    fn create_multiple(player_count: u8) -> Vec<Player> {
-        let mut players = vec![];
-
-        for _ in 0..player_count {
-            players.push(Self::default());
-        }
-
-        players
-    }
-
-    /// Scores a players hand of cards.
-    fn score_hand(&self) -> u32 {
-        self.hand.iter().fold(0, |sum, card| sum + card.value())
-    }
-}
-
-impl Default for Player {
-    fn default() -> Self {
-        Player { hand: Vec::new() }
-    }
-}
-
 /// GameBuilder struct representing game options.
 struct GameBuilder {
-    player_count: u8,
+    card_count: u8,
 }
 
 /// Builds the game object using the builder pattern.
 impl GameBuilder {
     /// GameBuilder Contsturctor.
     fn new() -> GameBuilder {
-        GameBuilder { player_count: 2 }
+        GameBuilder { card_count: 3 }
     }
 
     /// Option to change the number of players.
-    fn max_players(mut self, count: u8) -> GameBuilder {
-        self.player_count = match count {
-            0..=1 => panic!("Must have more than 1 player."),
-            2..=5 => count,
-            _ => panic!("Too many players."),
+    fn max_cards(mut self, count: u8) -> GameBuilder {
+        self.card_count = match count {
+            0..=2 => panic!("Must have more than one card."),
+            3..=5 => count,
+            _ => panic!("Too many cards."),
         };
         self
     }
@@ -61,8 +35,8 @@ impl GameBuilder {
     fn spawn(self) -> Game {
         Game {
             deck: DeckBuilder::new(),
-            players: Player::create_multiple(self.player_count),
-            turn: 0,
+            cards: Vec::new(),
+            games_played: 0,
         }
     }
 }
@@ -70,8 +44,8 @@ impl GameBuilder {
 /// Holds game state.
 struct Game {
     deck: Vec<Card>,
-    players: Vec<Player>,
-    turn: usize,
+    cards: Vec<Card>,
+    games_played: usize,
 }
 
 impl Game {
@@ -81,71 +55,87 @@ impl Game {
         self.deck.shuffle(&mut rng);
     }
 
-    /// Checks the state of the game.
-    /// The game is complete when all players have 3 cards.
-    fn is_over(&self) -> bool {
-        self.players.iter().all(|card| card.hand.len() > 2)
+    fn deal_cards(&mut self) {
+        self.shuffle_deck();
+        self.cards = self.deck.drain(0..3).collect();
     }
 
-    /// Calculate all the players cards and prints the winner.
-    fn show_winner(&self) {
-        let mut winner = 0;
-        let mut winning_score = 0;
-
-        for (index, player) in self.players.iter().enumerate() {
-            let score = player.score_hand();
-
-            if score > winning_score {
-                winning_score = score;
-                winner = index
+    fn find_high_card(&self) -> usize {
+        let mut index = 0;
+        let mut value = 0;
+        for (idx, card) in self.cards.iter().enumerate() {
+            if card.value() > value {
+                value = card.value();
+                index = idx;
             }
         }
-        println!("Player {} won!!!!", winner);
+        index
     }
 
-    /// Shows the scores and hands of each player.
-    fn show_results(&self) {
-        for (index, player) in self.players.iter().enumerate() {
-            let name = format!("Player {}", index);
-            display_hand(&player.hand, &name);
-
-            println!("Score: {}", player.score_hand());
-        }
+    fn inc_gamesplayed(&mut self) {
+        self.games_played += 1;
     }
+}
 
-    /// Advances the game forward one turn.
-    fn advance(&mut self) {
-        let card = self.deck.pop().unwrap();
-        let player = self.turn % self.players.len();
+use std::fmt::{self, Display, Formatter};
+use std::io::{self, Read};
 
-        println!(
-            "Turn {}: Player {} drew a {} with a value of {}.",
-            self.turn,
-            player,
-            card.nomenclature(),
-            card.value()
-        );
-
-        self.players[player].hand.push(card);
-        self.players[player].hand.sort();
-
-        self.turn += 1;
-    }
-
-    fn start(&mut self) {
-        self.shuffle_deck();
-
-        while !self.is_over() {
-            self.advance();
-        }
-
-        self.show_winner();
-
-        self.show_results();
+impl Display for Game {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+        write!(formatter, "Games Played: {}", &self.games_played)
     }
 }
 
 fn main() {
-    let mut game: Game = GameBuilder::new().max_players(3).spawn();
-    game.start();
+    let mut game: Game = GameBuilder::new().spawn();
+
+    loop {
+        game.deal_cards();
+        let winning_card = game.find_high_card();
+
+        display_hand(&game.cards, true);
+        println!("Pick a card any card.");
+
+        let mut input = String::new();
+        let mut choice = 0;
+
+        match io::stdin().read_line(&mut input) {
+            Ok(_) => {
+                if let Ok(i) = input.trim().parse::<usize>() {
+                    if i < 0 {
+                        choice = 0;
+                    } else if i > game.cards.len() - 1 {
+                        choice = game.cards.len() - 1;
+                    } else {
+                        choice = i;
+                    }
+                }
+            }
+            Err(_) => {}
+        }
+
+        game.cards[choice].toggle();
+        display_hand(&game.cards, true);
+
+        println!("Lets see the results.");
+
+        let sleep_time = time::Duration::from_secs(2);
+        thread::sleep(sleep_time);
+
+        game.cards[choice].toggle();
+        game.cards[0].toggle();
+        game.cards[1].toggle();
+        game.cards[2].toggle();
+
+        display_hand(&game.cards, true);
+
+        if choice == winning_card {
+            println!("You win!!!")
+        } else {
+            println!("You lose!")
+        }
+
+        game.inc_gamesplayed();
+        println!("{}\n\n", game);
+    }
 }
