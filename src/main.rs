@@ -306,7 +306,6 @@ mod card_printer {
 }
 
 struct Player {
-    score: u32,
     hand: Vec<Card>,
 }
 
@@ -329,10 +328,7 @@ impl Player {
 
 impl Default for Player {
     fn default() -> Self {
-        Player {
-            score: 0,
-            hand: Vec::new(),
-        }
+        Player { hand: Vec::new() }
     }
 }
 
