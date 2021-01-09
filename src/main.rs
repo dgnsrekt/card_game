@@ -406,7 +406,7 @@ impl Game {
         let player = self.turn % self.players.len();
 
         println!(
-            "Player {} picked a {} with a value of {}.",
+            "Player {} drew an {} with a value of {}.",
             player,
             card.nomenclature(),
             card.value()
