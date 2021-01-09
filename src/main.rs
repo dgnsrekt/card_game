@@ -305,6 +305,37 @@ mod card_printer {
     }
 }
 
+struct Player {
+    score: u32,
+    hand: Vec<Card>,
+}
+
+impl Player {
+    fn create_multiple(player_count: u8) -> Vec<Player> {
+        let mut players = vec![];
+
+        for _ in 0..player_count {
+            players.push(Self::default());
+        }
+
+        players
+    }
+
+    /// Scores a players hand of cards.
+    fn score_hand(&self) -> u32 {
+        self.hand.iter().fold(0, |sum, card| sum + card.value())
+    }
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Player {
+            score: 0,
+            hand: Vec::new(),
+        }
+    }
+}
+
 use card_printer::display_hand;
 use cards::{Card, DeckBuilder};
 
@@ -321,7 +352,7 @@ impl GameBuilder {
     }
 
     /// Option to change the number of players.
-    fn players(mut self, count: u8) -> GameBuilder {
+    fn max_players(mut self, count: u8) -> GameBuilder {
         self.player_count = match count {
             0..=1 => panic!("Must have more than 1 player."),
             2..=5 => count,
@@ -334,29 +365,16 @@ impl GameBuilder {
     fn spawn(self) -> Game {
         Game {
             deck: DeckBuilder::new(),
-
-            players: {
-                let mut players = vec![];
-                for _ in 0..self.player_count {
-                    players.push(Vec::new());
-                }
-                players
-            },
-
+            players: Player::create_multiple(self.player_count),
             turn: 0,
         }
     }
 }
 
-/// Scores a players hand of cards.
-fn score_hand(hand: &Vec<Card>) -> u32 {
-    hand.iter().fold(0, |sum, card| sum + card.value())
-}
-
 /// Holds game state.
 struct Game {
     deck: Vec<Card>,
-    players: Vec<Vec<Card>>,
+    players: Vec<Player>,
     turn: usize,
 }
 
@@ -370,7 +388,7 @@ impl Game {
     /// Checks the state of the game.
     /// The game is complete when all players have 3 cards.
     fn is_over(&self) -> bool {
-        self.players.iter().all(|card| card.len() > 2)
+        self.players.iter().all(|card| card.hand.len() > 2)
     }
 
     /// Calculate all the players cards and prints the winner.
@@ -378,12 +396,12 @@ impl Game {
         let mut winner = 0;
         let mut winning_score = 0;
 
-        for (player, hand) in self.players.iter().enumerate() {
-            let score = score_hand(&hand);
+        for (index, player) in self.players.iter().enumerate() {
+            let score = player.score_hand();
 
             if score > winning_score {
                 winning_score = score;
-                winner = player
+                winner = index
             }
         }
         println!("Player {} won!!!!", winner);
@@ -391,36 +409,36 @@ impl Game {
 
     /// Shows the scores and hands of each player.
     fn show_results(&self) {
-        for (player, hand) in self.players.iter().enumerate() {
-            let name = format!("Player {}", player);
-            display_hand(&hand, &name);
+        for (index, player) in self.players.iter().enumerate() {
+            let name = format!("Player {}", index);
+            display_hand(&player.hand, &name);
 
-            let score = score_hand(&hand);
-            println!("SCORE: {}", score);
+            println!("Score: {}", player.score_hand());
         }
     }
 
-    /// Increments the game forward.
+    /// Advances the game forward one turn.
     fn advance(&mut self) {
         let card = self.deck.pop().unwrap();
         let player = self.turn % self.players.len();
 
         println!(
-            "Player {} drew an {} with a value of {}.",
+            "Turn {}: Player {} drew an {} with a value of {}.",
+            self.turn,
             player,
             card.nomenclature(),
             card.value()
         );
 
-        self.players[player].push(card);
-        self.players[player].sort();
+        self.players[player].hand.push(card);
+        self.players[player].hand.sort();
 
         self.turn += 1;
     }
 }
 
 fn main() {
-    let mut game: Game = GameBuilder::new().players(3).spawn();
+    let mut game: Game = GameBuilder::new().max_players(3).spawn();
 
     game.shuffle_deck();
 
