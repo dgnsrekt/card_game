@@ -230,6 +230,7 @@ mod cards {
 /// This module provides functions for creating displayable cards.
 ///
 /// Example:
+/// ```
 /// *---------* *---------* *---------*
 /// | K       | | 4       | | 8       |
 /// |         | |         | |         |
@@ -237,6 +238,7 @@ mod cards {
 /// |         | |         | |         |
 /// |       K | |       4 | |       8 |
 /// *---------* *---------* *---------*
+/// ```
 ///
 mod card_printer {
     use super::cards::{Card, Rank};
