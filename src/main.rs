@@ -124,7 +124,7 @@ fn main() {
         println!("Press [Enter] for a random choice.");
 
         let mut input = String::new();
-        let mut choice: usize = rand::thread_rng().gen_range(0..2);
+        let mut choice: usize = rand::thread_rng().gen_range(0..=2);
 
         match io::stdin().read_line(&mut input) {
             Ok(_) => {
