@@ -2,6 +2,7 @@
 
 //! Super Card Game
 
+use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::{thread, time};
@@ -39,6 +40,7 @@ impl GameBuilder {
             deck: DeckBuilder::new(),
             cards: Vec::new(),
             games_played: 0,
+            wins: 0,
         }
     }
 }
@@ -48,6 +50,7 @@ struct Game {
     deck: Vec<Card>,
     cards: Vec<Card>,
     games_played: usize,
+    wins: usize,
 }
 
 impl Game {
@@ -77,6 +80,17 @@ impl Game {
     fn inc_gamesplayed(&mut self) {
         self.games_played += 1;
     }
+
+    fn inc_wins(&mut self) {
+        self.wins += 1;
+    }
+
+    fn out_of_cards(&self) -> bool {
+        if self.deck.len() < 3 {
+            return true;
+        }
+        false
+    }
 }
 
 use std::fmt::{self, Display, Formatter};
@@ -84,23 +98,33 @@ use std::io::{self};
 
 impl Display for Game {
     fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-        write!(formatter, "Games Played: {}", &self.games_played)
+        write!(
+            formatter,
+            "Won {} out of {} games.\nCards Left {}",
+            self.wins,
+            self.games_played,
+            self.deck.len(),
+        )
     }
 }
 
 fn main() {
     let mut game: Game = GameBuilder::new().spawn();
+    println!("{}", game.cards.len());
 
-    loop {
+    while !game.out_of_cards() {
         game.deal_cards();
+
         let winning_card = game.find_high_card();
-        let sleep_time = time::Duration::from_secs(2);
+        let sleep_time = time::Duration::from_secs(1);
 
         display_hand(&game.cards, true);
-        println!("Pick a card any card.");
+
+        println!("Find the High card.");
+        println!("Press [Enter] for a random choice.");
 
         let mut input = String::new();
-        let mut choice = 0;
+        let mut choice: usize = rand::thread_rng().gen_range(0..2);
 
         match io::stdin().read_line(&mut input) {
             Ok(_) => {
@@ -130,6 +154,7 @@ fn main() {
         display_hand(&game.cards, true);
 
         if choice == winning_card {
+            game.inc_wins();
             println!("You win!!!")
         } else {
             println!("You lose!")
@@ -140,4 +165,6 @@ fn main() {
 
         thread::sleep(sleep_time);
     }
+
+    println!("Sorry ran out of cards.");
 }
