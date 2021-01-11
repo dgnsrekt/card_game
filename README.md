@@ -1,4 +1,4 @@
 
-# Find the lady
+# Find the high card.
 
 ![alt text](img/example.gif)
